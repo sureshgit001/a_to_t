@@ -12,13 +12,11 @@ from routes.ui_routes import ui_ai_routes
 
 from flask_cors import CORS
 import logging
+import os
 from config import FLASK_PORT, DEBUG_MODE
 
 app = Flask(__name__)
 CORS(app)
-
-# ---- DO NOT START PLAYWRIGHT HERE ----
-# BrowserManager.start(headless=True)
 
 # Setup logging
 setup_logging()
@@ -31,8 +29,8 @@ app.register_blueprint(affiliate_routes)
 app.register_blueprint(amazon_bp, url_prefix="/amazon")
 app.register_blueprint(send_amazon_product_to_telegram_bp)
 
-# ---- Start Playwright when Flask starts (SAFE FOR FLASK 3 & RENDER) ----
-@app.before_serving
+# ---- Playwright INIT (SAFE FOR GUNICORN & RENDER) ----
+@app.before_first_request
 def initialize_playwright():
     try:
         logging.info("Starting Playwright browser...")
@@ -41,8 +39,10 @@ def initialize_playwright():
     except Exception as e:
         logging.error(f"Failed to start Playwright: {e}")
 
+# ---- SERVER START ----
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
     logging.info("Starting Flask app with Telegram Quote Scheduler...")
     # start_scheduler()
-    app.run(port=5000, debug=False, use_reloader=False, threaded=False)
+
+    port = int(os.environ.get("PORT", FLASK_PORT))
+    app.run(host="0.0.0.0", port=port, debug=DEBUG_MODE, use_reloader=False, threaded=True)
