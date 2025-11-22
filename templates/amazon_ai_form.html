@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Amazon Product to Telegram (AI Enhanced)</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+  <div class="container py-5">
+    <div class="card shadow-lg p-4">
+      <h3 class="text-center text-primary mb-4">
+        🤖 Amazon Product to Telegram (AI Powered)
+      </h3>
+
+      <!-- URL Input -->
+      <form id="amazonForm" class="mb-4">
+        <div class="input-group">
+          <input type="url" id="url" class="form-control" placeholder="Paste Amazon URL here..." required>
+          <button class="btn btn-success" type="submit">Fetch & Generate</button>
+        </div>
+      </form>
+
+      <!-- Response Display -->
+      <div id="response" class="mt-4">
+        <div id="loading" class="text-center text-secondary d-none">⏳ Fetching product details...</div>
+        <div id="product-info"></div>
+        <div id="ai-summary" class="mt-3"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById("amazonForm");
+    const responseDiv = document.getElementById("response");
+    const loading = document.getElementById("loading");
+    const productInfoDiv = document.getElementById("product-info");
+    const aiSummaryDiv = document.getElementById("ai-summary");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const url = document.getElementById("url").value.trim();
+      if (!url) return alert("Please enter a valid Amazon URL.");
+
+      productInfoDiv.innerHTML = "";
+      aiSummaryDiv.innerHTML = "";
+      loading.classList.remove("d-none");
+
+      try {
+        const res = await fetch(`/telegram/send-amazon-product?url=${encodeURIComponent(url)}`);
+        const data = await res.json();
+        loading.classList.add("d-none");
+
+        if (data.error) {
+          productInfoDiv.innerHTML = `<div class="text-danger">❌ ${data.error}</div>`;
+          return;
+        }
+
+        const p = data.product_title || {};
+        const summary = data.ai_summary || "No AI summary generated.";
+
+        // Product Info UI
+        productInfoDiv.innerHTML = `
+          <div class="card p-3 border-0">
+            <div class="d-flex align-items-start">
+              <img src="${p.image || ''}" class="me-3 rounded shadow-sm" style="width:120px;height:auto;">
+              <div>
+                <h5>${p.title || "No Title"}</h5>
+                <p><b>💰 Price:</b> ${p.price || "N/A"}</p>
+                <p><b>🔥 Discount:</b> ${p.discount || "N/A"}</p>
+                <p><b>⭐ Rating:</b> ${p.rating || "N/A"}</p>
+                <a href="${p.url || '#'}" target="_blank" class="btn btn-sm btn-outline-primary">🛒 View on Amazon</a>
+              </div>
+            </div>
+          </div>
+        `;
+
+        // AI Summary
+        aiSummaryDiv.innerHTML = `
+          <div class="alert alert-info mt-3">
+            <h6>🤖 AI Telegram Caption:</h6>
+            <p>${summary}</p>
+          </div>
+        `;
+
+      } catch (err) {
+        loading.classList.add("d-none");
+        productInfoDiv.innerHTML = `<div class="text-danger">⚠️ Failed: ${err.message}</div>`;
+      }
+    });
+  </script>
+</body>
+</html>
