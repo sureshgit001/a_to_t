@@ -31,9 +31,8 @@ app.register_blueprint(affiliate_routes)
 app.register_blueprint(amazon_bp, url_prefix="/amazon")
 app.register_blueprint(send_amazon_product_to_telegram_bp)
 
-
-# ---- Start Playwright when Flask starts (SAFE FOR RENDER) ----
-@app.before_first_request
+# ---- Start Playwright when Flask starts (SAFE FOR FLASK 3 & RENDER) ----
+@app.before_serving
 def initialize_playwright():
     try:
         logging.info("Starting Playwright browser...")
@@ -41,7 +40,6 @@ def initialize_playwright():
         logging.info("Playwright browser started successfully.")
     except Exception as e:
         logging.error(f"Failed to start Playwright: {e}")
-
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
